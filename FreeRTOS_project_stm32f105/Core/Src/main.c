@@ -33,7 +33,7 @@
 /* USER CODE BEGIN PTD */
 bool task2=0;
 int i=0;
-
+int a[1]={3};
 int adc_val1=0;
 uint8_t str[10]="";
 int adc_val2=0;
@@ -43,7 +43,7 @@ uint8_t str3[10]="";
 int adc_val4=0;
 uint8_t str4[10]="";
 
-
+bool durum=0;
 uint8_t Sensor1;
 uint8_t Sensor2;
 uint8_t Sensor3;
@@ -52,6 +52,7 @@ uint8_t Sensor5;
 uint8_t Sensor6;
 uint8_t Sensor7;
 
+uint16_t result3=0;
 
 char temperature[10];
 char temperatureHopper[10];
@@ -59,6 +60,7 @@ float PT100_Temperature = 0.0f;
 float PT100_TemperatureHopper = 0.0f;
 float temp=0;
 float temp1=0;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -470,7 +472,8 @@ static void MX_GPIO_Init(void)
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, SPI1_CS_Pin|GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, SPI1_CS_Pin|m1_Pin|m2_Pin|m3_Pin
+			|m4_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pins : Sensor1_Pin Sensor7_Pin Sensor6_Pin Sensor5_Pin */
 	GPIO_InitStruct.Pin = Sensor1_Pin|Sensor7_Pin|Sensor6_Pin|Sensor5_Pin;
@@ -484,8 +487,10 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : SPI1_CS_Pin PA11 PA12 */
-	GPIO_InitStruct.Pin = SPI1_CS_Pin|GPIO_PIN_11|GPIO_PIN_12;
+	/*Configure GPIO pins : SPI1_CS_Pin m1_Pin m2_Pin m3_Pin
+                           m4_Pin */
+	GPIO_InitStruct.Pin = SPI1_CS_Pin|m1_Pin|m2_Pin|m3_Pin
+			|m4_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -517,14 +522,11 @@ void StartDefaultTask(void const * argument)
 	for(;;)
 	{
 		i++;
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
-		HAL_Delay(1000);
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
 		HAL_Delay(1000);
 		if(i==3){
 			task2=1;
 		}
-		osDelay(1);
+		osDelay(50);
 	}
 	/* USER CODE END 5 */
 }
@@ -546,8 +548,9 @@ void Task2_Init(void const * argument)
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
 			HAL_Delay(1000);
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
-			HAL_Delay(1000);}
-		osDelay(1);
+			HAL_Delay(1000);
+		}
+		osDelay(25);
 	}
 	/* USER CODE END Task2_Init */
 }
@@ -642,7 +645,6 @@ void Task4_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-
 		Sensor1 = HAL_GPIO_ReadPin(GPIOB,Sensor1_Pin);
 		Sensor2 = HAL_GPIO_ReadPin(GPIOC,Sensor2_Pin);
 		Sensor3 = HAL_GPIO_ReadPin(GPIOC,Sensor3_Pin);
@@ -650,7 +652,6 @@ void Task4_Init(void const * argument)
 		Sensor5 = HAL_GPIO_ReadPin(GPIOB,Sensor5_Pin);
 		Sensor6 = HAL_GPIO_ReadPin(GPIOB,Sensor6_Pin);
 		Sensor7 = HAL_GPIO_ReadPin(GPIOB,Sensor7_Pin);
-
 		osDelay(100);
 	}
 	/* USER CODE END Task4_Init */
@@ -687,21 +688,6 @@ void Task6_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-
-		PT100_Temperature = MAX31865_Get_Temperature();
-		if (PT100_Temperature >= 0) {
-			PT100_Temperature = PT100_Temperature + 0.05;
-			sprintf(temperature, "+%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
-			temp = (float)atof(temperature);
-		}
-		else {
-			PT100_Temperature = -PT100_Temperature + 0.05;
-			sprintf(temperature, "-%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
-			temp = (float)atof(temperature);
-		}
-
-
-
 		PT100_TemperatureHopper = MAX31865_Get_Temperature2();
 		if (PT100_TemperatureHopper >= 0) {
 			PT100_TemperatureHopper = PT100_TemperatureHopper + 0.05;
@@ -731,7 +717,20 @@ void Task7_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		osDelay(1);
+		PT100_Temperature = MAX31865_Get_Temperature();
+		if (PT100_Temperature >= 0) {
+			PT100_Temperature = PT100_Temperature + 0.05;
+			sprintf(temperature, "%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
+			temp = (float)atof(temperature);
+		}
+		else {
+			PT100_Temperature = -PT100_Temperature + 0.05;
+			sprintf(temperature, "-%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
+			temp = (float)atof(temperature);
+		}
+
+		osDelay(320);
+
 	}
 	/* USER CODE END Task7_Init */
 }
@@ -749,7 +748,16 @@ void Task8_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		osDelay(1);
+
+		if(durum==1){
+			HAL_GPIO_WritePin(GPIOA, m1_Pin|m2_Pin|m3_Pin
+					|m4_Pin, GPIO_PIN_SET);
+		}
+		else{
+			HAL_GPIO_WritePin(GPIOA, m1_Pin|m2_Pin|m3_Pin
+					|m4_Pin, GPIO_PIN_RESET);
+		}
+		osDelay(75);
 	}
 	/* USER CODE END Task8_Init */
 }
