@@ -64,8 +64,8 @@ all: main-build
 main-build: FreeRTOS_project_stm32f105.elf secondary-outputs
 
 # Tool invocations
-FreeRTOS_project_stm32f105.elf FreeRTOS_project_stm32f105.map: $(OBJS) $(USER_OBJS) C:\Users\KEOHDURGUT\STM32CubeIDE\workspace_1.10.0\FreeRTOS_project_stm32f105\STM32F105RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "FreeRTOS_project_stm32f105.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\KEOHDURGUT\STM32CubeIDE\workspace_1.10.0\FreeRTOS_project_stm32f105\STM32F105RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="FreeRTOS_project_stm32f105.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+FreeRTOS_project_stm32f105.elf FreeRTOS_project_stm32f105.map: $(OBJS) $(USER_OBJS) C:\Users\KEOHDURGUT\Documents\GitHub\STM32_FreeRTOS_project\FreeRTOS_project_stm32f105\STM32F105RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "FreeRTOS_project_stm32f105.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\KEOHDURGUT\Documents\GitHub\STM32_FreeRTOS_project\FreeRTOS_project_stm32f105\STM32F105RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="FreeRTOS_project_stm32f105.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
