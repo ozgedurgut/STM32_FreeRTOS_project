@@ -1,0 +1,4 @@
+../Core/Src/MAX31865_lib2.c:43:6:MAX31865_2_Init	24	static
+../Core/Src/MAX31865_lib2.c:80:9:MAX31865_Configuration_info2	16	static
+../Core/Src/MAX31865_lib2.c:96:8:MAX31865_Get_Temperature2	32	static
+../Core/Src/MAX31865_lib2.c:151:8:MAX31865_Get_Temperature_math2	32	static
