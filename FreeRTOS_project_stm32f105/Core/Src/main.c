@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "MAX31865_lib.h"
@@ -52,7 +53,22 @@ uint8_t Sensor5;
 uint8_t Sensor6;
 uint8_t Sensor7;
 
-uint16_t result3=0;
+
+uint32_t currentTime = 0;
+uint32_t previousTime = 0;
+char txdata[8];
+char txdatanew[8];
+
+uint8_t final_data[8]={0,0,0,0,0,0,0,0};
+
+char TxData;
+uint8_t rxBuf[8];
+uint8_t rxindex = 0;
+uint8_t rxindex_2 = 0;
+
+char txdatanew[8];
+uint8_t Buf_1ch[1];
+uint8_t len=0;
 
 char temperature[10];
 char temperatureHopper[10];
@@ -80,6 +96,7 @@ SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 osThreadId defaultTaskHandle;
 osThreadId Task2Handle;
@@ -118,7 +135,28 @@ void Task9_Init(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart == &huart2) {
+		previousTime = currentTime;
+		rxBuf[rxindex] = Buf_1ch[0];
+		final_data[rxindex] = rxBuf[rxindex];
+		rxindex++;
 
+		HAL_UART_Receive_DMA(&huart2, Buf_1ch, 1);
+		if (rxindex >= 8) {
+			rxindex = 0;
+		}
+	}
+}
+
+void sendData(char *data) {
+	len = sizeof(txdata) / sizeof(txdata[0]);
+	for (int i = 0; i < len; i++) {
+		txdata[i] = data[i];
+	}
+	sprintf(txdatanew, "%s",txdata);
+	HAL_UART_Transmit(&huart2, (uint8_t*)&txdatanew, 8, 500);
+}
 /* USER CODE END 0 */
 
 /**
@@ -157,7 +195,8 @@ int main(void)
 	/* USER CODE BEGIN 2 */
 	MAX31865_Init(3); // num of wires
 	MAX31865_2_Init(3); // num of wires
-
+	HAL_UART_Receive_DMA(&huart2, Buf_1ch, 1); // dmayı tekrar kurduk yine alabilsin diye
+	__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
 	/* USER CODE END 2 */
 
 	/* USER CODE BEGIN RTOS_MUTEX */
@@ -453,6 +492,9 @@ static void MX_DMA_Init(void)
 	/* DMA1_Channel1_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+	/* DMA1_Channel6_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
@@ -548,8 +590,7 @@ void Task2_Init(void const * argument)
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
 			HAL_Delay(1000);
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
-			HAL_Delay(1000);
-		}
+			HAL_Delay(1000);}
 		osDelay(25);
 	}
 	/* USER CODE END Task2_Init */
@@ -670,7 +711,10 @@ void Task5_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		osDelay(1);
+
+		sendData("1111111");
+
+		osDelay(100);
 	}
 	/* USER CODE END Task5_Init */
 }
@@ -720,7 +764,7 @@ void Task7_Init(void const * argument)
 		PT100_Temperature = MAX31865_Get_Temperature();
 		if (PT100_Temperature >= 0) {
 			PT100_Temperature = PT100_Temperature + 0.05;
-			sprintf(temperature, "%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
+			sprintf(temperature, "+%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
 			temp = (float)atof(temperature);
 		}
 		else {
@@ -729,6 +773,13 @@ void Task7_Init(void const * argument)
 			temp = (float)atof(temperature);
 		}
 
+		if(temp>=30){
+			durum=1;
+			sendData("4544214");
+		}
+		else{
+			durum=0;
+		}
 		osDelay(320);
 
 	}
@@ -748,10 +799,12 @@ void Task8_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
+		sendData("0000000");
 
 		if(durum==1){
 			HAL_GPIO_WritePin(GPIOA, m1_Pin|m2_Pin|m3_Pin
 					|m4_Pin, GPIO_PIN_SET);
+
 		}
 		else{
 			HAL_GPIO_WritePin(GPIOA, m1_Pin|m2_Pin|m3_Pin
@@ -775,7 +828,9 @@ void Task9_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		osDelay(1);
+
+		osDelay(20);
+
 	}
 	/* USER CODE END Task9_Init */
 }
