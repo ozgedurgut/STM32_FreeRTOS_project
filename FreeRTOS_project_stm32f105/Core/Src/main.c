@@ -136,19 +136,37 @@ void Task9_Init(void const * argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart == &huart2) {
-		previousTime = currentTime;
-		rxBuf[rxindex] = Buf_1ch[0];
-		final_data[rxindex] = rxBuf[rxindex];
-		rxindex++;
 
-		HAL_UART_Receive_DMA(&huart2, Buf_1ch, 1);
-		if (rxindex >= 8) {
-			rxindex = 0;
-		}
+}
+float Get_Temperature_Cylinder(){
+	PT100_Temperature = MAX31865_Get_Temperature();
+	if (PT100_Temperature >= 0) {
+		PT100_Temperature = PT100_Temperature + 0.05;
+		sprintf(temperature, "+%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
+		temp = (float)atof(temperature);
 	}
+	else {
+		PT100_Temperature = -PT100_Temperature + 0.05;
+		sprintf(temperature, "-%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
+		temp = (float)atof(temperature);
+	}
+	return temp;
 }
 
+float Get_Temperature_Hopper(){
+	PT100_TemperatureHopper = MAX31865_Get_Temperature2();
+	if (PT100_TemperatureHopper >= 0) {
+		PT100_TemperatureHopper = PT100_TemperatureHopper + 0.05;
+		sprintf(temperatureHopper, "+%d.%d", (uint16_t) (PT100_TemperatureHopper),((uint16_t) (PT100_TemperatureHopper * 100)- ((uint16_t) PT100_TemperatureHopper) * 100) / 10);
+		temp1 = (float)atof(temperatureHopper);
+	}
+	else {
+		PT100_TemperatureHopper = -PT100_TemperatureHopper + 0.05;
+		sprintf(temperatureHopper, "-%d.%d", (uint16_t) (PT100_TemperatureHopper),((uint16_t) (PT100_TemperatureHopper * 100)- ((uint16_t) PT100_TemperatureHopper) * 100) / 10);
+		temp1 = (float)atof(temperatureHopper);
+	}
+	return temp1;
+}
 void sendData(char *data) {
 	len = sizeof(txdata) / sizeof(txdata[0]);
 	for (int i = 0; i < len; i++) {
@@ -195,7 +213,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	MAX31865_Init(3); // num of wires
 	MAX31865_2_Init(3); // num of wires
-	HAL_UART_Receive_DMA(&huart2, Buf_1ch, 1); // dmayı tekrar kurduk yine alabilsin diye
+
+	HAL_UART_Receive_DMA(&huart2, Buf_1ch, 8); // dmayı tekrar kurduk yine alabilsin diye
 	__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   /* USER CODE END 2 */
 
@@ -712,8 +731,7 @@ void Task5_Init(void const * argument)
 	for(;;)
 	{
 
-		sendData("1111111");
-
+		HAL_UART_Receive_DMA(&huart2, final_data, 8);
 		osDelay(100);
 	}
   /* USER CODE END Task5_Init */
@@ -732,17 +750,8 @@ void Task6_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		PT100_TemperatureHopper = MAX31865_Get_Temperature2();
-		if (PT100_TemperatureHopper >= 0) {
-			PT100_TemperatureHopper = PT100_TemperatureHopper + 0.05;
-			sprintf(temperatureHopper, "+%d.%d", (uint16_t) (PT100_TemperatureHopper),((uint16_t) (PT100_TemperatureHopper * 100)- ((uint16_t) PT100_TemperatureHopper) * 100) / 10);
-			temp1 = (float)atof(temperatureHopper);
-		}
-		else {
-			PT100_TemperatureHopper = -PT100_TemperatureHopper + 0.05;
-			sprintf(temperatureHopper, "-%d.%d", (uint16_t) (PT100_TemperatureHopper),((uint16_t) (PT100_TemperatureHopper * 100)- ((uint16_t) PT100_TemperatureHopper) * 100) / 10);
-			temp1 = (float)atof(temperatureHopper);
-		}
+		Get_Temperature_Cylinder();
+				Get_Temperature_Hopper();
 		osDelay(300);
 	}
   /* USER CODE END Task6_Init */
@@ -761,26 +770,8 @@ void Task7_Init(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		PT100_Temperature = MAX31865_Get_Temperature();
-		if (PT100_Temperature >= 0) {
-			PT100_Temperature = PT100_Temperature + 0.05;
-			sprintf(temperature, "+%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
-			temp = (float)atof(temperature);
-		}
-		else {
-			PT100_Temperature = -PT100_Temperature + 0.05;
-			sprintf(temperature, "-%d.%d", (uint16_t) (PT100_Temperature),((uint16_t) (PT100_Temperature * 100)- ((uint16_t) PT100_Temperature) * 100) / 10);
-			temp = (float)atof(temperature);
-		}
 
-		if(temp>=30){
-			durum=1;
-			sendData("4544214");
-		}
-		else{
-			durum=0;
-		}
-		osDelay(320);
+		osDelay(1);
 
 	}
   /* USER CODE END Task7_Init */
